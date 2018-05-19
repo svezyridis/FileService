@@ -3,6 +3,26 @@
   <groupId>FileService</groupId>
   <artifactId>FileService</artifactId>
   <version>0.0.1-SNAPSHOT</version>
+  <dependencies>
+    <!-- https://mvnrepository.com/artifact/org.json/json -->
+		<dependency>
+    		<groupId>org.json</groupId>
+    		<artifactId>json</artifactId>
+    		<version>20180130</version>
+		</dependency>
+	<!-- https://mvnrepository.com/artifact/org.jdom/jdom2 -->
+		<dependency>
+    		<groupId>org.jdom</groupId>
+    		<artifactId>jdom2</artifactId>
+    		<version>2.0.6</version>
+	</dependency>
+	<!-- https://mvnrepository.com/artifact/org.apache.zookeeper/zookeeper -->
+		<dependency>
+    		<groupId>org.apache.zookeeper</groupId>
+    		<artifactId>zookeeper</artifactId>
+    		<version>3.4.12</version>
+		</dependency>
+  </dependencies>
   <packaging>war</packaging>
   <build>
     <sourceDirectory>src</sourceDirectory>

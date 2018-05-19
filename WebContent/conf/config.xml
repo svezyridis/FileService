@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+ <settings>
+    <zookeeper>
+    	<zooip>snf-815309.vm.okeanos.grnet.gr:2181</zooip>
+    	<zooip>snf-821392.vm.okeanos.grnet.gr:2181</zooip>
+    	<zooip>snf-821393.vm.okeanos.grnet.gr:2181</zooip>
+    	<storageservicepath>/StorageServices</storageservicepath>
+    	<zoouser>savvas</zoouser>
+    	<zoopass>savvas</zoopass>
+    </zookeeper>
+    <identifier>FSID</identifier>
+    <sharedkey>7vjTsO0IhSZsNA6ze37Dk/xXw2nphFM9ZAMUkwXgaAA=</sharedkey>
+  </settings>
