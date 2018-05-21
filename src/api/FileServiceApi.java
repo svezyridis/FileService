@@ -1,13 +1,13 @@
 package api;
 
 import javax.servlet.ServletException;
+import javax.servlet.annotation.MultipartConfig;
 import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.nio.file.Paths;
+
 import javax.servlet.*;
 import javax.servlet.http.*; 
 import javax.crypto.*;
@@ -24,11 +24,12 @@ import crypto.Validator;
 /**
  * Servlet implementation class FileServiceApi
  */
+@MultipartConfig
 @WebServlet("/FileServiceApi")
 public class FileServiceApi extends HttpServlet {
 	public static String getRepositoryPath() {
 		// outside of webapp!!
-		return "/tmp/";
+		return "/home/boubis12/Desktop/images";
 	}
 	
 	private int counter = 0;
@@ -47,24 +48,32 @@ public class FileServiceApi extends HttpServlet {
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		request.setCharacterEncoding("UTF-8");
-		response.setContentType("image/jpg");
+		response.setContentType("application/json");
 		String fileID=request.getParameter("fileid");
 		String userID=request.getParameter("userid");
 		String validTill=request.getParameter("validtill");
 		String hmac=request.getParameter("hmac");	
+		PrintWriter out = response.getWriter();
 
 		try {
 			if(Validator.validateHMAC(fileID,userID,validTill,hmac)&&Validator.validateTime(validTill)) {
-				File file = new File("/home/boubis12/Downloads/image.jpg");
+				File file = new File("/home/savvas/Documents/image.jpg");
 				FileInputStream fis = null;
 				fis = new FileInputStream(file);
 				BufferedImage image=ImageIO.read(fis);
 			    ImageIO.write(image, "JPG", response.getOutputStream());
+			    JSONObject resJSON=new JSONObject();
+			    resJSON.put("error", "");
+			    out.print(resJSON);
+				out.flush();
 				return;
 			
 			}
 		} catch (GeneralSecurityException e) {
-			// TODO Auto-generated catch block
+			  JSONObject resJSON=new JSONObject();
+			    resJSON.put("error", e.getMessage());
+			    out.print(resJSON);
+				out.flush();
 			e.printStackTrace();
 		}
 	}
@@ -72,10 +81,46 @@ public class FileServiceApi extends HttpServlet {
 	/**
 	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
 	 */
+
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		request.setCharacterEncoding("UTF-8");
+		response.setContentType("application/json;charset=UTF-8");
+		PrintWriter out = response.getWriter();
+		String fileID=request.getParameter("fileid");
+		String userID=request.getParameter("userid");
+		System.out.println(userID);
+		String validTill=request.getParameter("validtill");
+		System.out.println(validTill);
+		String hmac=request.getParameter("hmac");
+		System.out.println(hmac);
 		
+		try {
+			if(Validator.validateHMAC(fileID,userID,validTill,hmac)&&Validator.validateTime(validTill)) {
+				Part filePart = request.getPart("file"); // Retrieves <input type="file" name="file">
+			    String fileName = Paths.get(filePart.getSubmittedFileName()).getFileName().toString(); // MSIE fix.
+			    InputStream fileContent = filePart.getInputStream();
+			    BufferedImage image=ImageIO.read(fileContent);
+			    File outputfile = new File(getRepositoryPath()+"/"+userID+"/"+fileName);
+			    outputfile.mkdirs();
+			    ImageIO.write(image, "jpg", outputfile);
+			    JSONObject resJSON=new JSONObject();
+				resJSON.put("error", "");
+				out.print(resJSON.toString());
+				return;
+			
+			}
+			JSONObject resJSON=new JSONObject();
+			resJSON.put("error", "invalid hmac");
+			out.print(resJSON.toString());
+			return;
+		} catch (GeneralSecurityException e) {
+			JSONObject resJSON=new JSONObject();
+			resJSON.put("error", e.getMessage());
+			out.print(resJSON.toString());
+			e.printStackTrace();
+			return;
+		}		
 		
-		doGet(request, response);
 	}
 
 }

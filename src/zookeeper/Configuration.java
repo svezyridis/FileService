@@ -8,6 +8,7 @@ import java.net.UnknownHostException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -94,7 +95,7 @@ public class Configuration implements ServletContextListener {
 		});
 		connectedSignal.await();
 		
-		//zk.addAuthInfo("digest", new String(zoouser+":"+zoopass).getBytes());
+		zk.addAuthInfo("digest", new String(zoouser+":"+zoopass).getBytes());
 		
 		System.out.println("finished zooConnect");
 
@@ -147,18 +148,14 @@ public class Configuration implements ServletContextListener {
 
 	public void PublishService(ServletContextEvent sce) {
 		Configuration instance=getInstance();
-		ACL acl = new ACL();
+		ACL acl = null;
 		try {
-			String base64EncodedSHA1Digest = Base64.getEncoder().encodeToString(MessageDigest.getInstance("SHA1").
-					digest((zoopass).getBytes()));
-			acl.setPerms(ZooDefs.Perms.ALL);
-			acl.setId(new Id("digest",zoouser+":"+base64EncodedSHA1Digest));
+			String base64EncodedSHA1Digest = Base64.getEncoder().encodeToString(MessageDigest.getInstance("SHA1").digest((zoouser+":"+zoopass).getBytes()));
+			acl = new ACL(ZooDefs.Perms.ALL, new Id("digest",zoouser+":" + base64EncodedSHA1Digest));
 		}
 		catch (NoSuchAlgorithmException ex) {
 			System.err.println("destroy NoSuchAlgorithmException");
 		}
-		List<ACL> aclList=new ArrayList<ACL>();
-		aclList.add(acl);
 		
 	       try {
 			instance.myip= InetAddress.getLocalHost().toString();
@@ -178,10 +175,10 @@ public class Configuration implements ServletContextListener {
 			Stat stat = instance.zoo.exists(strgpath, false);
 			if(stat==null) {
 				System.out.println("Node does not exist, creating node");
-				instance.zoo.create(strgpath, "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
+				instance.zoo.create(strgpath, "".getBytes(), Arrays.asList(acl),
 						CreateMode.PERSISTENT);
 			}
-			instance.zoo.create(strgpath+"/"+identifier, configJSON.toString().getBytes(),ZooDefs.Ids.OPEN_ACL_UNSAFE,
+			instance.zoo.create(strgpath+"/"+identifier, configJSON.toString().getBytes(),Arrays.asList(acl),
 					CreateMode.EPHEMERAL);
 		} catch (InterruptedException e1) {
 			// TODO Auto-generated catch block
