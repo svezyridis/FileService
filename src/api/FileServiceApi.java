@@ -6,6 +6,8 @@ import javax.servlet.annotation.WebServlet;
 
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.net.URLDecoder;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 
 import javax.servlet.*;
@@ -13,6 +15,8 @@ import javax.servlet.http.*;
 import javax.crypto.*;
 import javax.crypto.spec.*;
 import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.ImageInputStream;
 
 import java.security.*;
 import java.security.spec.*;
@@ -20,6 +24,7 @@ import java.util.*;
 import org.json.*;
 
 import crypto.Validator;
+import zookeeper.Configuration;
 
 /**
  * Servlet implementation class FileServiceApi
@@ -29,11 +34,12 @@ import crypto.Validator;
 public class FileServiceApi extends HttpServlet {
 	public static String getRepositoryPath() {
 		// outside of webapp!!
-		return "/home/boubis12/Desktop/images";
+		return Configuration.getRootPath();
 	}
 	
 	private int counter = 0;
 	private static final long serialVersionUID = 1L;
+	
        
     /**
      * @see HttpServlet#HttpServlet()
@@ -48,32 +54,36 @@ public class FileServiceApi extends HttpServlet {
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		request.setCharacterEncoding("UTF-8");
-		response.setContentType("application/json");
 		String fileID=request.getParameter("fileid");
+		System.out.println(fileID);
 		String userID=request.getParameter("userid");
+		System.out.println(userID);
 		String validTill=request.getParameter("validtill");
-		String hmac=request.getParameter("hmac");	
-		PrintWriter out = response.getWriter();
+		System.out.println(validTill);
+		String hmac=request.getParameter("hmac");
+		System.out.println(hmac);
 
 		try {
 			if(Validator.validateHMAC(fileID,userID,validTill,hmac)&&Validator.validateTime(validTill)) {
-				File file = new File("/home/savvas/Documents/image.jpg");
+				
+				
+				File file = new File(getRepositoryPath()+"/"+userID+"/"+fileID);
+				String mimetype=Files.probeContentType(file.toPath());
+				response.setContentType(mimetype);
 				FileInputStream fis = null;
 				fis = new FileInputStream(file);
 				BufferedImage image=ImageIO.read(fis);
-			    ImageIO.write(image, "JPG", response.getOutputStream());
-			    JSONObject resJSON=new JSONObject();
-			    resJSON.put("error", "");
-			    out.print(resJSON);
-				out.flush();
+				System.out.println(mimetype);
+			
+				String format=Configuration.getMimeToExtensionMap().get(mimetype);
+				System.out.println(format);
+			    ImageIO.write(image, format, response.getOutputStream());
 				return;
 			
 			}
 		} catch (GeneralSecurityException e) {
-			  JSONObject resJSON=new JSONObject();
-			    resJSON.put("error", e.getMessage());
-			    out.print(resJSON);
-				out.flush();
+			 
+			 
 			e.printStackTrace();
 		}
 	}
@@ -98,13 +108,22 @@ public class FileServiceApi extends HttpServlet {
 			if(Validator.validateHMAC(fileID,userID,validTill,hmac)&&Validator.validateTime(validTill)) {
 				Part filePart = request.getPart("file"); // Retrieves <input type="file" name="file">
 			    String fileName = Paths.get(filePart.getSubmittedFileName()).getFileName().toString(); // MSIE fix.
-			    InputStream fileContent = filePart.getInputStream();
+			    ImageInputStream fileContent = ImageIO.createImageInputStream(filePart.getInputStream());
+			    Iterator<ImageReader> readers = ImageIO.getImageReaders(fileContent);
+			    if (readers.hasNext()) {
+			        ImageReader reader = readers.next();
+			    String format=reader.getFormatName();
 			    BufferedImage image=ImageIO.read(fileContent);
-			    File outputfile = new File(getRepositoryPath()+"/"+userID+"/"+fileName);
+			    File outputfile = new File(getRepositoryPath()+"/"+userID+"/"+fileID);
 			    outputfile.mkdirs();
-			    ImageIO.write(image, "jpg", outputfile);
+			    ImageIO.write(image, format, outputfile);
 			    JSONObject resJSON=new JSONObject();
 				resJSON.put("error", "");
+				out.print(resJSON.toString());
+				return;
+			    }
+			    JSONObject resJSON=new JSONObject();
+				resJSON.put("error", "unsupported file");
 				out.print(resJSON.toString());
 				return;
 			
@@ -119,7 +138,14 @@ public class FileServiceApi extends HttpServlet {
 			out.print(resJSON.toString());
 			e.printStackTrace();
 			return;
-		}		
+		}
+		catch (IllegalArgumentException e) {
+			JSONObject resJSON=new JSONObject();
+			resJSON.put("error", e.getMessage());
+			out.print(resJSON.toString());
+			e.printStackTrace();
+			return;
+		}
 		
 	}
 

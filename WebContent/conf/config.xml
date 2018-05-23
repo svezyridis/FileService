@@ -10,4 +10,6 @@
     </zookeeper>
     <identifier>FSID</identifier>
     <sharedkey>7vjTsO0IhSZsNA6ze37Dk/xXw2nphFM9ZAMUkwXgaAA=</sharedkey>
+    <hostname>https://snf-815309.vm.okeanos.grnet.gr:8443/FileService/FileServiceApi</hostname>
+    <rootpath>/images</rootpath>
   </settings>

@@ -10,7 +10,9 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
 
@@ -48,18 +50,38 @@ public class Configuration implements ServletContextListener {
 	private static String zoouser; 
 	private static String zoopass; 
 	private  ZooKeeper zoo;
+	private static  Map<String,String> mimeTypeToFileExtension=initializeMap();
 	
 	final CountDownLatch connectedSignal = new CountDownLatch(1);
+	private static String rootpath;
 	private static Configuration ConfInstance = null;
 	
 	public static String getSharedKey() {
 		Configuration instance = getInstance();
 		return instance.sharedkey;
 	}
+	public static Map<String,String> getMimeToExtensionMap() {
+		Configuration instance = getInstance();
+		return mimeTypeToFileExtension;
+	}
 	
+	private static Map<String, String> initializeMap() {
+		 Map<String,String> myMap = new HashMap<String,String>();
+	        myMap.put("image/jpeg", "JPG");
+	        myMap.put("image/png", "PNG");
+	        myMap.put("image/bmp", "BMP");
+	        myMap.put("image/gif", "GIF");
+	        myMap.put("image/svg+xml", "SVG");
+	        return myMap;
+	}
+
 	public static String getMyIdentifier() {
 		Configuration instance = getInstance();
 		return instance.identifier;
+	}
+	public static String getRootPath() {
+		Configuration instance = getInstance();
+		return instance.rootpath;
 	}
 	
 	public static String getMyIP() {
@@ -135,6 +157,9 @@ public class Configuration implements ServletContextListener {
 	            instance.zoopass=setting.getChild("zoopass").getValue();
 	            instance.identifier=classElement.getChild("identifier").getValue();    
 	            instance.sharedkey=classElement.getChild("sharedkey").getValue();
+	            instance.myip= classElement.getChild("hostname").getValue();
+	            instance.rootpath= classElement.getChild("rootpath").getValue();
+				System.out.println(instance.myip);
 	        
 
 	            
@@ -157,14 +182,8 @@ public class Configuration implements ServletContextListener {
 			System.err.println("destroy NoSuchAlgorithmException");
 		}
 		
-	       try {
-			instance.myip= InetAddress.getLocalHost().toString();
-			instance.myip=instance.myip+"/"+sce.getServletContext().getServletContextName();
-			System.out.println(instance.myip);
-		} catch (UnknownHostException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+			
+		
 	       JSONObject configJSON=new JSONObject();
 	       configJSON.put("URL", instance.myip);
 	       configJSON.put("key", instance.sharedkey);
@@ -175,7 +194,7 @@ public class Configuration implements ServletContextListener {
 			Stat stat = instance.zoo.exists(strgpath, false);
 			if(stat==null) {
 				System.out.println("Node does not exist, creating node");
-				instance.zoo.create(strgpath, "".getBytes(), Arrays.asList(acl),
+				instance.zoo.create(strgpath, "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
 						CreateMode.PERSISTENT);
 			}
 			instance.zoo.create(strgpath+"/"+identifier, configJSON.toString().getBytes(),Arrays.asList(acl),
