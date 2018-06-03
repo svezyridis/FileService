@@ -26,7 +26,10 @@ public class Validator {
 	}
 
 	public static boolean validateTime(String validTill) {
-		// TODO Auto-generated method stub
+		if(((int)(System.currentTimeMillis()/1000)-Integer.parseInt(validTill))>60) {
+			return false;
+			
+		}
 		return true;
 	}
 
