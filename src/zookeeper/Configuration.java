@@ -31,6 +31,8 @@ import org.jdom2.JDOMException;
 import org.jdom2.input.SAXBuilder;
 import org.json.JSONObject;
 
+import api.Stats;
+
 
 
 
@@ -50,7 +52,9 @@ public class Configuration implements ServletContextListener {
 	private static String zoouser; 
 	private static String zoopass; 
 	private  ZooKeeper zoo;
+	private static int timeStarted;
 	private static  Map<String,String> mimeTypeToFileExtension=initializeMap();
+	private static Stats statistics;
 	
 	final CountDownLatch connectedSignal = new CountDownLatch(1);
 	private static String rootpath;
@@ -59,6 +63,14 @@ public class Configuration implements ServletContextListener {
 	public static String getSharedKey() {
 		Configuration instance = getInstance();
 		return instance.sharedkey;
+	}
+	public static int getTimeStarted() {
+		Configuration instance = getInstance();
+		return instance.timeStarted;
+	}
+	public static Stats getStats() {
+		Configuration instance = getInstance();
+		return instance.statistics;
 	}
 	public static Map<String,String> getMimeToExtensionMap() {
 		Configuration instance = getInstance();
@@ -246,6 +258,8 @@ public class Configuration implements ServletContextListener {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		instance.timeStarted=(int)(System.currentTimeMillis()/1000);
+		instance.statistics=new Stats();
 
 	    }
 	

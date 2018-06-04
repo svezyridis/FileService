@@ -78,6 +78,7 @@ public class FileServiceApi extends HttpServlet {
 				String format=Configuration.getMimeToExtensionMap().get(mimetype);
 				System.out.println(format);
 			    ImageIO.write(image, format, response.getOutputStream());
+			    Configuration.getStats().incReads();
 				return;
 			
 			}
@@ -120,6 +121,7 @@ public class FileServiceApi extends HttpServlet {
 			    JSONObject resJSON=new JSONObject();
 				resJSON.put("error", "");
 				out.print(resJSON.toString());
+				Configuration.getStats().incWrites();
 				return;
 			    }
 			    JSONObject resJSON=new JSONObject();
